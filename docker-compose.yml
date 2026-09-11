@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: wms-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: wms_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - wms-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d wms_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # --- AGREGADO AL FINAL: SERVICIO BACKEND ---
+  wms-backend:
+    build: .
+    container_name: wms-backend-app
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/wms_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgrespassword
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    networks:
+      - wms-network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  wms-network:
+    driver: bridge

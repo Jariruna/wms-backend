@@ -1,0 +1,20 @@
+# Maven / Compilación Java
+target/
+*.class
+*.jar
+*.war
+
+# IDE (IntelliJ IDEA, Eclipse, VSCode)
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.vscode/
+
+# Logs y temporales
+*.log
+.DS_Store
+
+# Datos persistentes locales de Docker
+postgres_data/
