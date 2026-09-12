@@ -18,7 +18,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 @Tag(name = "Ubicaciones", description = "Control y administración de posiciones físicas (Zona, Pasillo, Rack, Nivel)")
-public class UbicacionController {
+public class UbicacionAlmacenController {
 
     private final UbicacionService ubicacionService;
 
@@ -31,7 +31,7 @@ public class UbicacionController {
     @Operation(summary = "Obtener todas las ubicaciones activas")
     @GetMapping
     public ResponseEntity<List<UbicacionResponseDTO>> obtenerTodas() {
-        return ResponseEntity.ok(ubicacionService.obtenerActivas());
+        return ResponseEntity.ok(ubicacionService.obtenerTodas());
     }
 
     @Operation(summary = "Obtener por ID")

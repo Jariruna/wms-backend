@@ -1,5 +1,6 @@
 package com.wms.backend.service;
 
+import com.wms.backend.domain.TipoMovimiento;
 import com.wms.backend.dto.DashboardResumenDTO;
 import com.wms.backend.repository.ProductoRepository;
 import com.wms.backend.repository.MovimientoAlmacenRepository; // O la entidad correspondiente a tu Kardex
@@ -16,7 +17,7 @@ public class DashboardService {
 
     private final ProductoRepository productoRepository;
     // Inyecta el repositorio de movimientos o kardex si ya lo tienes definido
-    // private final MovimientoRepository movimientoRepository;
+    private final MovimientoAlmacenRepository movimientoRepository;
 
     public DashboardResumenDTO obtenerResumen() {
         LocalDateTime inicioHoy = LocalDate.now().atStartOfDay();
@@ -25,13 +26,15 @@ public class DashboardService {
         long totalProductos = productoRepository.count();
 
         // Consultas de ejemplo usando tu repositorio de movimientos/kardex:
-        // long entradasHoy = movimientoRepository.countByTipoAndFechaBetween("ENTRADA", inicioHoy, finHoy);
-        // long salidasHoy = movimientoRepository.countByTipoAndFechaBetween("SALIDA", inicioHoy, finHoy);
+        long entradasHoy = movimientoRepository.countByTipoMovimientoAndFechaMovimientoBetween(
+                TipoMovimiento.ENTRADA, inicioHoy, finHoy);
+        long salidasHoy = movimientoRepository.countByTipoMovimientoAndFechaMovimientoBetween(
+                TipoMovimiento.SALIDA, inicioHoy, finHoy);
 
         return DashboardResumenDTO.builder()
                 .totalProductos(totalProductos)
-                .entradasHoy(0) // Reemplazar por entradasHoy al mapear tu repositorio
-                .salidasHoy(0)  // Reemplazar por salidasHoy al mapear tu repositorio
+                .entradasHoy(entradasHoy) // Reemplazar por entradasHoy al mapear tu repositorio
+                .salidasHoy(salidasHoy)  // Reemplazar por salidasHoy al mapear tu repositorio
                 .build();
     }
 }
