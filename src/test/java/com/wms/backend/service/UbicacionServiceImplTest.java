@@ -69,7 +69,7 @@ class UbicacionServiceImplTest {
         when(ubicacionRepository.existsByCodigoUbicacion(requestDTO.getCodigoUbicacion())).thenReturn(false);
         when(ubicacionRepository.save(any(UbicacionAlmacen.class))).thenReturn(ubicacionEntidad);
 
-        UbicacionResponseDTO resultado = ubicacionService.crearUbicacion(requestDTO);
+        UbicacionResponseDTO resultado = ubicacionService.crear(requestDTO);
 
         assertThat(resultado).isNotNull();
         assertThat(resultado.getCodigoUbicacion()).isEqualTo("PAS-01-R02-N3-P01");
@@ -81,7 +81,7 @@ class UbicacionServiceImplTest {
     void crearUbicacion_CodigoDuplicado_LanzaExcepcion() {
         when(ubicacionRepository.existsByCodigoUbicacion(requestDTO.getCodigoUbicacion())).thenReturn(true);
 
-        assertThrows(ResourceAlreadyExistsException.class, () -> ubicacionService.crearUbicacion(requestDTO));
+        assertThrows(ResourceAlreadyExistsException.class, () -> ubicacionService.crear(requestDTO));
         verify(ubicacionRepository, never()).save(any());
     }
 
@@ -109,7 +109,7 @@ class UbicacionServiceImplTest {
     void eliminarUbicacion_Exito() {
         when(ubicacionRepository.findById(1L)).thenReturn(Optional.of(ubicacionEntidad));
 
-        ubicacionService.eliminarUbicacion(1L);
+        ubicacionService.eliminar(1L);
 
         assertThat(ubicacionEntidad.getActiva()).isFalse();
         verify(ubicacionRepository, times(1)).save(ubicacionEntidad);

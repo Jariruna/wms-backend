@@ -10,17 +10,23 @@ import java.util.Optional;
 @Repository
 public interface UbicacionRepository extends JpaRepository<UbicacionAlmacen, Long> {
 
-    // AGREGAR ESTAS DOS LÍNEAS:
+    // Validaciones y búsquedas por código único
     boolean existsByCodigoUbicacion(String codigoUbicacion);
 
     Optional<UbicacionAlmacen> findByCodigoUbicacion(String codigoUbicacion);
 
-    // MÉTODOS EXISTENTES EN TU IMAGEN:
+    // Búsquedas generales por estado
     List<UbicacionAlmacen> findByActivaTrue();
 
     List<UbicacionAlmacen> findByOcupadaAndActivaTrue(Boolean ocupada);
 
-    List<UbicacionAlmacen> findByPasilloAndRackAndActivaTrue(String pasillo, String rack);
+    // Búsquedas por zona
+    List<UbicacionAlmacen> findByZona(String zona);
 
+    List<UbicacionAlmacen> findByZonaAndActivaTrue(String zona);
+
+    // Búsquedas por pasillo y rack
     List<UbicacionAlmacen> findByPasilloAndActivaTrue(String pasillo);
+
+    List<UbicacionAlmacen> findByPasilloAndRackAndActivaTrue(String pasillo, String rack);
 }

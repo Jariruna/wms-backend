@@ -1,16 +1,20 @@
 package com.wms.backend.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j; // 1. Importar lombok slf4j
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j // 2. Activar el logger automáticamente
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -39,6 +43,17 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.BAD_REQUEST, "Petición o parámetro inválido", ex.getMessage(), request);
     }
 
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, Object>> handleHttpMessageNotReadable(HttpMessageNotReadableException ex, HttpServletRequest request) {
+        return buildResponse(HttpStatus.BAD_REQUEST, "Cuerpo de la petición malformado", "El cuerpo JSON es inválido o contiene tipos de datos incorrectos.", request);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Map<String, Object>> handleTypeMismatch(MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
+        String mensaje = String.format("El parámetro '%s' debe ser de tipo %s.", ex.getName(), ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "válido");
+        return buildResponse(HttpStatus.BAD_REQUEST, "Tipo de parámetro inválido", mensaje, request);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidationExceptions(MethodArgumentNotValidException ex, HttpServletRequest request) {
         Map<String, String> errors = new HashMap<>();
@@ -47,6 +62,7 @@ public class GlobalExceptionHandler {
         );
 
         Map<String, Object> body = createBaseBody(HttpStatus.BAD_REQUEST, "Error de validación en los datos ingresados", request);
+        body.put("message", "Se encontraron errores de validación en los campos enviados.");
         body.put("errors", errors);
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
@@ -54,10 +70,16 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGlobalException(Exception ex, HttpServletRequest request) {
-        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Error interno del servidor", ex.getMessage(), request);
-    }
+        // 3. Imprimir el stack trace exacto en consola para ver la causa raíz del error 500
+        log.error("Error interno no controlado en [{}]", request.getRequestURI(), ex);
 
-    // --- Métodos Auxiliares para Evitar Redundancia ---
+        return buildResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Error interno del servidor",
+                "Ocurrió un error no esperado en el servidor. Intente más tarde.",
+                request
+        );
+    }
 
     private Map<String, Object> createBaseBody(HttpStatus status, String errorLabel, HttpServletRequest request) {
         Map<String, Object> body = new HashMap<>();

@@ -1,3 +1,7 @@
+server:
+  error:
+    include-stacktrace: always
+
 spring:
   application:
     name: wms-backend

@@ -42,6 +42,10 @@ public class MovimientoAlmacenServiceImpl implements MovimientoAlmacenService {
         int stockAnterior = producto.getStock();
         int stockResultante;
 
+        // 1. Ejecutar actualización física por ubicación primero para obtener la diferencia real de stock global
+        int diferenciaStockGlobal = actualizarStockUbicacion(producto, ubicacion, requestDTO);
+
+        // 2. Calcular el stock resultante global exacto
         switch (requestDTO.getTipoMovimiento()) {
             case ENTRADA:
                 stockResultante = stockAnterior + requestDTO.getCantidad();
@@ -59,19 +63,19 @@ public class MovimientoAlmacenServiceImpl implements MovimientoAlmacenService {
                 stockResultante = stockAnterior;
                 break;
             case AJUSTE_INVENTARIO:
-                stockResultante = requestDTO.getCantidad();
+                stockResultante = stockAnterior + diferenciaStockGlobal;
                 break;
             default:
                 throw new IllegalArgumentException("Tipo de movimiento no válido: " + requestDTO.getTipoMovimiento());
         }
 
-        actualizarStockUbicacion(producto, ubicacion, requestDTO);
-
+        // 3. Persistir cambio global en el producto
         if (!TipoMovimiento.REUBICACION.equals(requestDTO.getTipoMovimiento())) {
             producto.setStock(stockResultante);
             productoRepository.save(producto);
         }
 
+        // 4. Registrar la trazabilidad del movimiento
         MovimientoAlmacen movimiento = MovimientoAlmacen.builder()
                 .producto(producto)
                 .ubicacion(ubicacion)
@@ -88,9 +92,10 @@ public class MovimientoAlmacenServiceImpl implements MovimientoAlmacenService {
         return mapToDTO(movimientoGuardado);
     }
 
-    private void actualizarStockUbicacion(Producto producto, UbicacionAlmacen ubicacionDestino, MovimientoRequestDTO requestDTO) {
+    private int actualizarStockUbicacion(Producto producto, UbicacionAlmacen ubicacionDestino, MovimientoRequestDTO requestDTO) {
         TipoMovimiento tipo = requestDTO.getTipoMovimiento();
         Integer cantidad = requestDTO.getCantidad();
+        int diferenciaGlobal = 0;
 
         if (TipoMovimiento.REUBICACION.equals(tipo)) {
             if (requestDTO.getUbicacionOrigenId() == null) {
@@ -116,13 +121,16 @@ public class MovimientoAlmacenServiceImpl implements MovimientoAlmacenService {
                 );
             }
 
+            // Descontar origen
             stockOrigen.setCantidad(stockOrigen.getCantidad() - cantidad);
             if (stockOrigen.getCantidad() == 0) {
                 stockUbicacionRepository.delete(stockOrigen);
+                actualizarEstadoOcupadoUbicacion(ubicacionOrigen);
             } else {
                 stockUbicacionRepository.save(stockOrigen);
             }
 
+            // Aumentar destino
             StockUbicacion stockDestino = stockUbicacionRepository
                     .findByProductoIdAndUbicacionId(producto.getId(), ubicacionDestino.getId())
                     .orElseGet(() -> StockUbicacion.builder()
@@ -137,7 +145,7 @@ public class MovimientoAlmacenServiceImpl implements MovimientoAlmacenService {
             ubicacionDestino.setOcupada(true);
             ubicacionRepository.save(ubicacionDestino);
 
-            return;
+            return 0;
         }
 
         StockUbicacion stockUbicacion = stockUbicacionRepository
@@ -156,6 +164,7 @@ public class MovimientoAlmacenServiceImpl implements MovimientoAlmacenService {
 
             ubicacionDestino.setOcupada(true);
             ubicacionRepository.save(ubicacionDestino);
+
         } else if (TipoMovimiento.SALIDA.equals(tipo)) {
             if (cantidadActual < cantidad) {
                 throw new InsufficientStockException(
@@ -163,15 +172,38 @@ public class MovimientoAlmacenServiceImpl implements MovimientoAlmacenService {
                                 ubicacionDestino.getCodigoUbicacion(), cantidadActual, cantidad)
                 );
             }
+
             stockUbicacion.setCantidad(cantidadActual - cantidad);
             if (stockUbicacion.getCantidad() == 0) {
                 stockUbicacionRepository.delete(stockUbicacion);
+                actualizarEstadoOcupadoUbicacion(ubicacionDestino);
             } else {
                 stockUbicacionRepository.save(stockUbicacion);
             }
+
         } else if (TipoMovimiento.AJUSTE_INVENTARIO.equals(tipo)) {
-            stockUbicacion.setCantidad(cantidad);
-            stockUbicacionRepository.save(stockUbicacion);
+            diferenciaGlobal = cantidad - cantidadActual;
+
+            if (cantidad == 0) {
+                stockUbicacionRepository.delete(stockUbicacion);
+                actualizarEstadoOcupadoUbicacion(ubicacionDestino);
+            } else {
+                stockUbicacion.setCantidad(cantidad);
+                stockUbicacionRepository.save(stockUbicacion);
+                ubicacionDestino.setOcupada(true);
+                ubicacionRepository.save(ubicacionDestino);
+            }
+        }
+
+        return diferenciaGlobal;
+    }
+
+    private void actualizarEstadoOcupadoUbicacion(UbicacionAlmacen ubicacion) {
+        // Verificar si existen otros productos en la misma ubicación antes de liberar el flag ocupada
+        List<StockUbicacion> productosEnUbicacion = stockUbicacionRepository.findByUbicacionId(ubicacion.getId());
+        if (productosEnUbicacion.isEmpty()) {
+            ubicacion.setOcupada(false);
+            ubicacionRepository.save(ubicacion);
         }
     }
 

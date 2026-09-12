@@ -15,11 +15,14 @@ public class UbicacionMapper {
 
         return UbicacionAlmacen.builder()
                 .codigoUbicacion(dto.getCodigoUbicacion())
+                .zona(dto.getZona()) // <-- AÑADIDO
                 .pasillo(dto.getPasillo())
                 .rack(dto.getRack())
                 .nivel(dto.getNivel())
                 .posicion(dto.getPosicion())
                 .capacidadMaxima(dto.getCapacidadMaxima())
+                .ocupada(false) // Valor inicial por defecto al crear
+                .activa(dto.getActiva() != null ? dto.getActiva() : true)
                 .build();
     }
 
@@ -31,6 +34,7 @@ public class UbicacionMapper {
         return UbicacionResponseDTO.builder()
                 .id(entity.getId())
                 .codigoUbicacion(entity.getCodigoUbicacion())
+                .zona(entity.getZona()) // <-- AÑADIDO
                 .pasillo(entity.getPasillo())
                 .rack(entity.getRack())
                 .nivel(entity.getNivel())
@@ -48,12 +52,16 @@ public class UbicacionMapper {
         }
 
         entity.setCodigoUbicacion(dto.getCodigoUbicacion());
+        entity.setZona(dto.getZona()); // <-- AÑADIDO
         entity.setPasillo(dto.getPasillo());
         entity.setRack(dto.getRack());
         entity.setNivel(dto.getNivel());
         entity.setPosicion(dto.getPosicion());
         if (dto.getCapacidadMaxima() != null) {
             entity.setCapacidadMaxima(dto.getCapacidadMaxima());
+        }
+        if (dto.getActiva() != null) {
+            entity.setActiva(dto.getActiva());
         }
     }
 }

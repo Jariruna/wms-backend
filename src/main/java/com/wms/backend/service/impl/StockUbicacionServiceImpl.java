@@ -1,6 +1,9 @@
 package com.wms.backend.service.impl;
 
+import com.wms.backend.domain.Producto;
 import com.wms.backend.domain.StockUbicacion;
+import com.wms.backend.domain.UbicacionAlmacen;
+import com.wms.backend.dto.StockUbicacionRequestDTO;
 import com.wms.backend.dto.StockUbicacionResponseDTO;
 import com.wms.backend.exception.ResourceNotFoundException;
 import com.wms.backend.repository.ProductoRepository;
@@ -20,6 +23,29 @@ public class StockUbicacionServiceImpl implements StockUbicacionService {
     private final StockUbicacionRepository stockUbicacionRepository;
     private final ProductoRepository productoRepository;
     private final UbicacionRepository ubicacionRepository;
+
+    @Override
+    @Transactional
+    public StockUbicacionResponseDTO guardarOActualizarStock(StockUbicacionRequestDTO dto) {
+        Producto producto = productoRepository.findById(dto.getProductoId())
+                .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con el ID: " + dto.getProductoId()));
+
+        UbicacionAlmacen ubicacion = ubicacionRepository.findById(dto.getUbicacionId())
+                .orElseThrow(() -> new ResourceNotFoundException("Ubicación no encontrada con el ID: " + dto.getUbicacionId()));
+
+        StockUbicacion stock = stockUbicacionRepository
+                .findByProductoIdAndUbicacionId(dto.getProductoId(), dto.getUbicacionId())
+                .orElse(StockUbicacion.builder()
+                        .producto(producto)
+                        .ubicacion(ubicacion)
+                        .cantidad(0)
+                        .build());
+
+        stock.setCantidad(dto.getCantidad());
+        StockUbicacion guardado = stockUbicacionRepository.save(stock);
+
+        return mapToDTO(guardado);
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -85,9 +111,7 @@ public class StockUbicacionServiceImpl implements StockUbicacionService {
                     .ubicacionZona(stockUbicacion.getUbicacion().getPosicion())
                     .ubicacionPasillo(stockUbicacion.getUbicacion().getPasillo())
                     .ubicacionRack(stockUbicacion.getUbicacion().getRack())
-                    .ubicacionNivel(stockUbicacion.getUbicacion().getNivel() != null
-                            ? String.valueOf(stockUbicacion.getUbicacion().getNivel())
-                            : null);
+                    .ubicacionNivel(stockUbicacion.getUbicacion().getNivel());
         }
 
         return builder.build();

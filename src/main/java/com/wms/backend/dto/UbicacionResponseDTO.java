@@ -15,6 +15,7 @@ public class UbicacionResponseDTO {
 
     private Long id;
     private String codigoUbicacion;
+    private String zona;
     private String pasillo;
     private String rack;
     private String nivel;
@@ -23,4 +24,5 @@ public class UbicacionResponseDTO {
     private Boolean ocupada;
     private Boolean activa;
     private LocalDateTime fechaCreacion;
+    private LocalDateTime fechaActualizacion;
 }

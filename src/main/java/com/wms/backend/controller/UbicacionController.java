@@ -4,8 +4,6 @@ import com.wms.backend.dto.UbicacionRequestDTO;
 import com.wms.backend.dto.UbicacionResponseDTO;
 import com.wms.backend.service.UbicacionService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +16,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/ubicaciones")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "*")
 @Tag(name = "Ubicaciones", description = "Control y administración de posiciones físicas (Zona, Pasillo, Rack, Nivel)")
 public class UbicacionController {
 
@@ -26,13 +25,13 @@ public class UbicacionController {
     @Operation(summary = "Crear ubicación", description = "Registra una nueva posición en el almacén.")
     @PostMapping
     public ResponseEntity<UbicacionResponseDTO> crearUbicacion(@Valid @RequestBody UbicacionRequestDTO requestDTO) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(ubicacionService.crearUbicacion(requestDTO));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ubicacionService.crear(requestDTO));
     }
 
     @Operation(summary = "Obtener todas las ubicaciones activas")
     @GetMapping
     public ResponseEntity<List<UbicacionResponseDTO>> obtenerTodas() {
-        return ResponseEntity.ok(ubicacionService.obtenerTodas());
+        return ResponseEntity.ok(ubicacionService.obtenerActivas());
     }
 
     @Operation(summary = "Obtener por ID")
@@ -41,19 +40,17 @@ public class UbicacionController {
         return ResponseEntity.ok(ubicacionService.obtenerPorId(id));
     }
 
-    @Operation(summary = "Obtener por Código alfanumérico")
-    @GetMapping("/codigo/{codigo}")
-    public ResponseEntity<UbicacionResponseDTO> obtenerPorCodigo(@PathVariable String codigo) {
-        return ResponseEntity.ok(ubicacionService.obtenerPorCodigo(codigo));
+    @Operation(summary = "Obtener por Código de ubicación")
+    @GetMapping("/codigo/{codigoUbicacion}")
+    public ResponseEntity<UbicacionResponseDTO> obtenerPorCodigo(@PathVariable String codigoUbicacion) {
+        return ResponseEntity.ok(ubicacionService.obtenerPorCodigo(codigoUbicacion));
     }
 
-    /*
     @Operation(summary = "Filtrar por Zona")
     @GetMapping("/zona/{zona}")
     public ResponseEntity<List<UbicacionResponseDTO>> obtenerPorZona(@PathVariable String zona) {
         return ResponseEntity.ok(ubicacionService.obtenerPorZona(zona));
     }
-    */
 
     @Operation(summary = "Filtrar por Pasillo y Rack")
     @GetMapping("/pasillo/{pasillo}/rack/{rack}")
@@ -64,9 +61,9 @@ public class UbicacionController {
     }
 
     @Operation(summary = "Filtrar por estado de Ocupación")
-    @GetMapping("/ocupado/{ocupado}")
-    public ResponseEntity<List<UbicacionResponseDTO>> obtenerPorEstadoOcupacion(@PathVariable Boolean ocupado) {
-        return ResponseEntity.ok(ubicacionService.obtenerPorEstadoOcupacion(ocupado));
+    @GetMapping("/ocupada/{ocupada}")
+    public ResponseEntity<List<UbicacionResponseDTO>> obtenerPorEstadoOcupacion(@PathVariable Boolean ocupada) {
+        return ResponseEntity.ok(ubicacionService.obtenerPorEstadoOcupacion(ocupada));
     }
 
     @Operation(summary = "Actualizar ubicación")
@@ -74,21 +71,30 @@ public class UbicacionController {
     public ResponseEntity<UbicacionResponseDTO> actualizarUbicacion(
             @PathVariable Long id,
             @Valid @RequestBody UbicacionRequestDTO requestDTO) {
-        return ResponseEntity.ok(ubicacionService.actualizarUbicacion(id, requestDTO));
+        return ResponseEntity.ok(ubicacionService.actualizar(id, requestDTO));
     }
 
     @Operation(summary = "Cambiar estado de ocupación de una posición")
     @PatchMapping("/{id}/ocupacion")
     public ResponseEntity<UbicacionResponseDTO> cambiarEstadoOcupacion(
             @PathVariable Long id,
-            @RequestParam Boolean ocupado) {
-        return ResponseEntity.ok(ubicacionService.cambiarEstadoOcupacion(id, ocupado));
+            @RequestParam Boolean ocupada) {
+        return ResponseEntity.ok(ubicacionService.cambiarEstadoOcupacion(id, ocupada));
     }
 
-    @Operation(summary = "Eliminación lógica de ubicación")
+    @Operation(summary = "Cambiar estado activo/inactivo (Soft Delete)")
+    @PatchMapping("/{id}/estado")
+    public ResponseEntity<Void> cambiarEstadoActivo(
+            @PathVariable Long id,
+            @RequestParam Boolean activa) {
+        ubicacionService.cambiarEstadoActivo(id, activa);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Eliminación física de ubicación")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminarUbicacion(@PathVariable Long id) {
-        ubicacionService.eliminarUbicacion(id);
+        ubicacionService.eliminar(id);
         return ResponseEntity.noContent().build();
     }
 }

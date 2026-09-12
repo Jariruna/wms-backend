@@ -7,7 +7,8 @@ import java.util.List;
 
 public interface UbicacionService {
 
-    UbicacionResponseDTO crearUbicacion(UbicacionRequestDTO requestDTO);
+    // --- MÉTODOS DE CREACIÓN Y BÚSQUEDA GENERAL ---
+    UbicacionResponseDTO crear(UbicacionRequestDTO requestDTO);
 
     UbicacionResponseDTO obtenerPorId(Long id);
 
@@ -15,13 +16,22 @@ public interface UbicacionService {
 
     List<UbicacionResponseDTO> obtenerTodas();
 
+    List<UbicacionResponseDTO> obtenerActivas();
+
+    // --- FILTROS ESPECÍFICOS DE ALMACÉN ---
+    List<UbicacionResponseDTO> obtenerPorZona(String zona);
+
     List<UbicacionResponseDTO> obtenerPorEstadoOcupacion(Boolean ocupada);
 
     List<UbicacionResponseDTO> obtenerPorPasilloYRack(String pasillo, String rack);
 
-    UbicacionResponseDTO actualizarUbicacion(Long id, UbicacionRequestDTO requestDTO);
+    // --- ACTUALIZACIÓN Y CAMBIOS DE ESTADO ---
+    UbicacionResponseDTO actualizar(Long id, UbicacionRequestDTO requestDTO);
 
     UbicacionResponseDTO cambiarEstadoOcupacion(Long id, Boolean ocupada);
 
-    void eliminarUbicacion(Long id);
+    void cambiarEstadoActivo(Long id, boolean activa);
+
+    // --- ELIMINACIÓN ---
+    void eliminar(Long id);
 }

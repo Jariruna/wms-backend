@@ -1,9 +1,16 @@
 package com.wms.backend.service;
 
+import com.wms.backend.dto.StockUbicacionRequestDTO;
 import com.wms.backend.dto.StockUbicacionResponseDTO;
 import java.util.List;
 
 public interface StockUbicacionService {
+
+    /**
+     * Registra un nuevo saldo de stock o actualiza la cantidad existente
+     * para la combinación Producto-Ubicación.
+     */
+    StockUbicacionResponseDTO guardarOActualizarStock(StockUbicacionRequestDTO dto);
 
     /**
      * Obtiene el listado completo de stock distribuido en todas las ubicaciones físicas del almacén.

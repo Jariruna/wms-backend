@@ -23,8 +23,9 @@ public class UbicacionServiceImpl implements UbicacionService {
 
     @Override
     @Transactional
-    public UbicacionResponseDTO crearUbicacion(UbicacionRequestDTO requestDTO) {
-        if (ubicacionRepository.existsByCodigoUbicacion(requestDTO.getCodigoUbicacion())) {
+    public UbicacionResponseDTO crear(UbicacionRequestDTO requestDTO) {
+        if (requestDTO.getCodigoUbicacion() != null &&
+                ubicacionRepository.existsByCodigoUbicacion(requestDTO.getCodigoUbicacion())) {
             throw new ResourceAlreadyExistsException(
                     "Ya existe una ubicación registrada con el código: " + requestDTO.getCodigoUbicacion()
             );
@@ -54,7 +55,23 @@ public class UbicacionServiceImpl implements UbicacionService {
     @Override
     @Transactional(readOnly = true)
     public List<UbicacionResponseDTO> obtenerTodas() {
+        return ubicacionRepository.findAll().stream()
+                .map(ubicacionMapper::toDTO)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UbicacionResponseDTO> obtenerActivas() {
         return ubicacionRepository.findByActivaTrue().stream()
+                .map(ubicacionMapper::toDTO)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UbicacionResponseDTO> obtenerPorZona(String zona) {
+        return ubicacionRepository.findByZonaAndActivaTrue(zona).stream()
                 .map(ubicacionMapper::toDTO)
                 .toList();
     }
@@ -77,10 +94,11 @@ public class UbicacionServiceImpl implements UbicacionService {
 
     @Override
     @Transactional
-    public UbicacionResponseDTO actualizarUbicacion(Long id, UbicacionRequestDTO requestDTO) {
+    public UbicacionResponseDTO actualizar(Long id, UbicacionRequestDTO requestDTO) {
         UbicacionAlmacen ubicacion = buscarPorIdOLanzar(id);
 
-        if (!ubicacion.getCodigoUbicacion().equals(requestDTO.getCodigoUbicacion())
+        if (requestDTO.getCodigoUbicacion() != null
+                && !ubicacion.getCodigoUbicacion().equalsIgnoreCase(requestDTO.getCodigoUbicacion())
                 && ubicacionRepository.existsByCodigoUbicacion(requestDTO.getCodigoUbicacion())) {
             throw new ResourceAlreadyExistsException(
                     "Ya existe otra ubicación con el código: " + requestDTO.getCodigoUbicacion()
@@ -103,7 +121,16 @@ public class UbicacionServiceImpl implements UbicacionService {
 
     @Override
     @Transactional
-    public void eliminarUbicacion(Long id) {
+    public void cambiarEstadoActivo(Long id, boolean activa) {
+        UbicacionAlmacen ubicacion = ubicacionRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ubicación no encontrada con ID: " + id));
+        ubicacion.setActiva(activa);
+        ubicacionRepository.save(ubicacion);
+    }
+
+    @Override
+    @Transactional
+    public void eliminar(Long id) {
         UbicacionAlmacen ubicacion = buscarPorIdOLanzar(id);
         ubicacion.setActiva(false); // Eliminación lógica
         ubicacionRepository.save(ubicacion);
