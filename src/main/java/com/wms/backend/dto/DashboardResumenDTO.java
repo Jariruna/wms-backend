@@ -13,4 +13,9 @@ public class DashboardResumenDTO {
     private long totalProductos;
     private long entradasHoy;
     private long salidasHoy;
+    private long stockCritico;
+    private double porcentajeOcupacion;
+    private long productosDisponibles;
+    private long productosCriticos;
+    private long productosAgotados;
 }

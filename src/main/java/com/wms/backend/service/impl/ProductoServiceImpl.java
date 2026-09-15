@@ -1,19 +1,22 @@
 package com.wms.backend.service.impl;
 
-import com.wms.backend.domain.Producto;
-import com.wms.backend.domain.UbicacionAlmacen;
+import com.wms.backend.domain.*;
 import com.wms.backend.dto.ProductoRequestDTO;
 import com.wms.backend.dto.ProductoResponseDTO;
+import com.wms.backend.dto.StockUbicacionDTO;
 import com.wms.backend.exception.DuplicateSkuException;
 import com.wms.backend.exception.ResourceNotFoundException;
 import com.wms.backend.mapper.ProductoMapper;
+import com.wms.backend.repository.MovimientoAlmacenRepository;
 import com.wms.backend.repository.ProductoRepository;
+import com.wms.backend.repository.StockUbicacionRepository;
 import com.wms.backend.repository.UbicacionRepository;
 import com.wms.backend.service.ProductoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -22,7 +25,10 @@ public class ProductoServiceImpl implements ProductoService {
 
     private final ProductoRepository productoRepository;
     private final UbicacionRepository ubicacionRepository;
+    private final MovimientoAlmacenRepository movimientoRepository;
     private final ProductoMapper productoMapper;
+    private final StockUbicacionRepository stockUbicacionRepository;
+
 
     @Override
     @Transactional
@@ -34,6 +40,30 @@ public class ProductoServiceImpl implements ProductoService {
         UbicacionAlmacen ubicacion = obtenerUbicacionSiExiste(requestDTO.getUbicacionId());
         Producto producto = productoMapper.toEntity(requestDTO, ubicacion);
         Producto productoGuardado = productoRepository.save(producto);
+
+        if (productoGuardado.getStock() != null && productoGuardado.getStock() > 0 && ubicacion != null) {
+            MovimientoAlmacen movimientoInicial = new MovimientoAlmacen();
+            movimientoInicial.setProducto(productoGuardado);
+            movimientoInicial.setUbicacion(ubicacion);
+            movimientoInicial.setTipoMovimiento(TipoMovimiento.ENTRADA); // Ajusta según tu enum (ej. "INGRESO" o TipoMovimiento.ENTRADA)
+            movimientoInicial.setCantidad(productoGuardado.getStock());
+            movimientoInicial.setStockAnterior(0);
+            movimientoInicial.setStockResultante(productoGuardado.getStock());
+            movimientoInicial.setMotivo("Stock inicial de apertura");
+            movimientoInicial.setUsuario("Sistema");
+            movimientoInicial.setFechaMovimiento(LocalDateTime.now());
+
+            movimientoRepository.save(movimientoInicial);
+
+            StockUbicacion stockUbicacion = new StockUbicacion();
+            stockUbicacion.setProducto(productoGuardado);
+            stockUbicacion.setUbicacion(ubicacion);
+            stockUbicacion.setCantidad(productoGuardado.getStock());
+            stockUbicacionRepository.save(stockUbicacion);
+
+
+        }
+
         return productoMapper.toResponseDTO(productoGuardado);
     }
 
@@ -57,7 +87,11 @@ public class ProductoServiceImpl implements ProductoService {
     @Transactional(readOnly = true)
     public List<ProductoResponseDTO> listarActivos() {
         return productoRepository.findByActivoTrue().stream()
-                .map(productoMapper::toResponseDTO)
+                .map(producto -> {
+                    ProductoResponseDTO dto = productoMapper.toResponseDTO(producto);
+                    cargarUbicacionesDetalle(producto.getId(), dto);
+                    return dto;
+                })
                 .toList();
     }
 
@@ -65,8 +99,32 @@ public class ProductoServiceImpl implements ProductoService {
     @Transactional(readOnly = true)
     public List<ProductoResponseDTO> listarTodos() {
         return productoRepository.findAll().stream()
-                .map(productoMapper::toResponseDTO)
+                .map(producto -> {
+                    ProductoResponseDTO dto = productoMapper.toResponseDTO(producto);
+                    cargarUbicacionesDetalle(producto.getId(), dto);
+                    return dto;
+                })
                 .toList();
+    }
+
+    // Método auxiliar para poblar el desglose que requiere el frontend
+    private void cargarUbicacionesDetalle(Long productoId, ProductoResponseDTO dto) {
+        List<StockUbicacion> stocks = stockUbicacionRepository.findByProductoId(productoId);
+
+        List<StockUbicacionDTO> detalle = stocks.stream().map(su ->
+                StockUbicacionDTO.builder()
+                        .id(su.getId())
+                        .productoId(su.getProducto().getId())
+                        .productoCodigoSku(su.getProducto().getCodigoSku())
+                        .productoNombre(su.getProducto().getNombre())
+                        .ubicacionId(su.getUbicacion().getId())
+                        .ubicacionCodigo(su.getUbicacion().getCodigoUbicacion())
+                        .zona(su.getUbicacion().getZona())
+                        .stock(su.getCantidad())
+                        .build()
+        ).toList();
+
+        dto.setUbicacionesDetalle(detalle);
     }
 
     @Override
@@ -103,4 +161,13 @@ public class ProductoServiceImpl implements ProductoService {
         return ubicacionRepository.findById(ubicacionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ubicación no encontrada con ID: " + ubicacionId));
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductoResponseDTO> listarProductosStockMinimo() {
+        return productoRepository.findProductosConStockMinimo().stream()
+                .map(productoMapper::toResponseDTO)
+                .toList();
+    }
+
 }

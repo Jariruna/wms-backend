@@ -17,5 +17,6 @@ public class JwtResponseDTO {
     private Long id;
     private String username;
     private String email;
+    private String nombreCompleto; // <-- Añadido para traerlo desde la BD
     private List<String> roles;
 }

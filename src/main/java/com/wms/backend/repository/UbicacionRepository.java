@@ -2,6 +2,7 @@ package com.wms.backend.repository;
 
 import com.wms.backend.domain.UbicacionAlmacen;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -29,4 +30,12 @@ public interface UbicacionRepository extends JpaRepository<UbicacionAlmacen, Lon
     List<UbicacionAlmacen> findByPasilloAndActivaTrue(String pasillo);
 
     List<UbicacionAlmacen> findByPasilloAndRackAndActivaTrue(String pasillo, String rack);
+
+    // Nuevos métodos para el cálculo de capacidad y ocupación en el Dashboard
+    long countByActivaTrue();
+
+    long countByOcupadaTrueAndActivaTrue();
+
+    @Query("SELECT SUM(u.capacidadMaxima) FROM UbicacionAlmacen u WHERE u.activa = true")
+    Long sumarCapacidadMaximaActiva();
 }

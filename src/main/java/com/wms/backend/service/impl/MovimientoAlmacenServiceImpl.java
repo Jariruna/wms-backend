@@ -17,8 +17,14 @@ import com.wms.backend.service.MovimientoAlmacenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import jakarta.persistence.criteria.Predicate;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
 
 @Service
 @RequiredArgsConstructor
@@ -238,6 +244,48 @@ public class MovimientoAlmacenServiceImpl implements MovimientoAlmacenService {
 
         return movimientoRepository.findByUbicacionIdOrderByFechaMovimientoDesc(ubicacionId)
                 .stream()
+                .map(this::mapToDTO)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<MovimientoResponseDTO> obtenerMovimientosFiltrados(
+            Long productoId,
+            TipoMovimiento tipo,
+            Long ubicacionId,
+            LocalDate fechaInicio,
+            LocalDate fechaFin) {
+
+        LocalDateTime inicio = (fechaInicio != null) ? fechaInicio.atStartOfDay() : null;
+        LocalDateTime fin = (fechaFin != null) ? fechaFin.atTime(LocalTime.MAX) : null;
+
+        Specification<MovimientoAlmacen> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (productoId != null) {
+                predicates.add(cb.equal(root.get("producto").get("id"), productoId));
+            }
+            if (tipo != null) {
+                predicates.add(cb.equal(root.get("tipoMovimiento"), tipo));
+            }
+            if (ubicacionId != null) {
+                predicates.add(cb.equal(root.get("ubicacion").get("id"), ubicacionId));
+            }
+            if (inicio != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("fechaMovimiento"), inicio));
+            }
+            if (fin != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("fechaMovimiento"), fin));
+            }
+
+            query.orderBy(cb.desc(root.get("fechaMovimiento")));
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        List<MovimientoAlmacen> movimientos = movimientoRepository.findAll(spec);
+
+        return movimientos.stream()
                 .map(this::mapToDTO)
                 .toList();
     }

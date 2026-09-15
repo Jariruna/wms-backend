@@ -17,12 +17,19 @@ public class AuthController {
 
     private final AuthService authService;
 
+    /**
+     * Endpoint para el inicio de sesión.
+     * Retorna el JwtResponseDTO que ahora incluye el nombreCompleto desde la BD.
+     */
     @PostMapping("/login")
     public ResponseEntity<JwtResponseDTO> authenticateUser(@Valid @RequestBody LoginRequestDTO loginRequest) {
         JwtResponseDTO tokenResponse = authService.login(loginRequest);
         return ResponseEntity.ok(tokenResponse);
     }
 
+    /**
+     * Endpoint para el registro de nuevos usuarios en el sistema WMS.
+     */
     @PostMapping("/register")
     public ResponseEntity<String> registerUser(@Valid @RequestBody RegistroRequestDTO registroRequest) {
         String mensaje = authService.registrarUsuario(registroRequest);

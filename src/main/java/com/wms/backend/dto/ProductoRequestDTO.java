@@ -1,9 +1,6 @@
 package com.wms.backend.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PositiveOrZero;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -37,4 +34,8 @@ public class ProductoRequestDTO {
     private Integer stock;
 
     private Long ubicacionId;
+
+    @NotNull(message = "El stock mínimo es obligatorio")
+    @Min(value = 0, message = "El stock mínimo no puede ser negativo")
+    private Integer stockMinimo;
 }

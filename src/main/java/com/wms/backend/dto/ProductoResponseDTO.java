@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-
+import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -24,4 +24,7 @@ public class ProductoResponseDTO {
     private LocalDateTime fechaCreacion;
     private LocalDateTime fechaActualizacion;
     private UbicacionResponseDTO ubicacion;
+    private Integer stockMinimo;
+
+    private List<StockUbicacionDTO> ubicacionesDetalle;
 }

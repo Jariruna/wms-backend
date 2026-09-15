@@ -67,6 +67,9 @@ public class Producto {
     @JoinColumn(name = "ubicacion_id")
     private UbicacionAlmacen ubicacion;
 
+    @Column(name = "stock_minimo", nullable = false)
+    private Integer stockMinimo;
+
     @PrePersist
     protected void onCreate() {
         this.fechaCreacion = LocalDateTime.now();

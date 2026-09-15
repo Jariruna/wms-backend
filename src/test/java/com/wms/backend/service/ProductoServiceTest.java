@@ -7,7 +7,9 @@ import com.wms.backend.exception.DuplicateSkuException;
 import com.wms.backend.exception.ResourceNotFoundException;
 import com.wms.backend.mapper.ProductoMapper;
 import com.wms.backend.mapper.UbicacionMapper;
+import com.wms.backend.repository.MovimientoAlmacenRepository;
 import com.wms.backend.repository.ProductoRepository;
+import com.wms.backend.repository.StockUbicacionRepository;
 import com.wms.backend.repository.UbicacionRepository;
 import com.wms.backend.service.impl.ProductoServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,6 +37,12 @@ class ProductoServiceTest {
     @Mock
     private UbicacionRepository ubicacionRepository;
 
+    @Mock
+    private MovimientoAlmacenRepository movimientoAlmacenRepository;
+
+    @Mock
+    private StockUbicacionRepository stockUbicacionRepository;
+
     // Instanciación directa del Mapper asegurando sus dependencias sin reflexión fallida
     @Spy
     private ProductoMapper productoMapper = new ProductoMapper(new UbicacionMapper());
@@ -46,11 +54,14 @@ class ProductoServiceTest {
 
     @BeforeEach
     void setUp() {
-        // Inicializamos el servicio manualmente garantizando la inyección correcta
+        // Inicializamos el servicio manualmente pasando las cinco dependencias en el orden correcto
         productoService = new ProductoServiceImpl(
                 productoRepository,
                 ubicacionRepository,
-                productoMapper
+                movimientoAlmacenRepository,
+                productoMapper,
+                stockUbicacionRepository
+
         );
 
         requestDTO = ProductoRequestDTO.builder()

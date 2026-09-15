@@ -4,12 +4,13 @@ import com.wms.backend.domain.MovimientoAlmacen;
 import com.wms.backend.domain.TipoMovimiento;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
-public interface MovimientoAlmacenRepository extends JpaRepository<MovimientoAlmacen, Long> {
+public interface MovimientoAlmacenRepository extends JpaRepository<MovimientoAlmacen, Long>, JpaSpecificationExecutor<MovimientoAlmacen> {
 
     // Historial de Kardex ordenado por fecha descendente
     List<MovimientoAlmacen> findByProductoIdOrderByFechaMovimientoDesc(Long productoId);
@@ -18,4 +19,5 @@ public interface MovimientoAlmacenRepository extends JpaRepository<MovimientoAlm
     List<MovimientoAlmacen> findByUbicacionIdOrderByFechaMovimientoDesc(Long ubicacionId);
 
     long countByTipoMovimientoAndFechaMovimientoBetween(TipoMovimiento tipoMovimiento, LocalDateTime inicio, LocalDateTime fin);
+
 }

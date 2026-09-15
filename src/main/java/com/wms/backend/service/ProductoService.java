@@ -20,4 +20,6 @@ public interface ProductoService {
     ProductoResponseDTO actualizarProducto(Long id, ProductoRequestDTO requestDTO);
 
     void desactivarProducto(Long id);
+
+    List<ProductoResponseDTO> listarProductosStockMinimo();
 }

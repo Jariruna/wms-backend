@@ -91,4 +91,10 @@ public class ProductoController {
         productoService.desactivarProducto(id);
         return ResponseEntity.noContent().build();
     }
+
+    @Operation(summary = "Listar productos con stock mínimo o crítico", description = "Obtiene la lista de productos cuyo stock actual es menor o igual al stock mínimo configurado.")
+    @GetMapping("/stock-minimo")
+    public ResponseEntity<List<ProductoResponseDTO>> listarProductosStockMinimo() {
+        return ResponseEntity.ok(productoService.listarProductosStockMinimo());
+    }
 }

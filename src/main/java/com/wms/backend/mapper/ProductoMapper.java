@@ -23,6 +23,7 @@ public class ProductoMapper {
                 .codigoSku(dto.getCodigoSku())
                 .precio(dto.getPrecio())
                 .stock(dto.getStock())
+                .stockMinimo(dto.getStockMinimo())
                 .ubicacion(ubicacion)
                 .activo(true)
                 .build();
@@ -39,6 +40,7 @@ public class ProductoMapper {
                 .codigoSku(entity.getCodigoSku())
                 .precio(entity.getPrecio())
                 .stock(entity.getStock())
+                .stockMinimo(entity.getStockMinimo())
                 .activo(entity.getActivo())
                 .ubicacion(ubicacionMapper.toDTO(entity.getUbicacion()))
                 .fechaCreacion(entity.getFechaCreacion())
@@ -55,6 +57,7 @@ public class ProductoMapper {
         entity.setCodigoSku(dto.getCodigoSku());
         entity.setPrecio(dto.getPrecio());
         entity.setStock(dto.getStock());
+        entity.setStockMinimo(dto.getStockMinimo());
         entity.setUbicacion(ubicacion);
     }
 }
