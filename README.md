@@ -61,3 +61,22 @@ Este proyecto está en constante evolución mientras continúo mi ruta de aprend
    ```bash
    git clone [https://github.com/Jariruna/wms-backend.git](https://github.com/Jariruna/wms-backend.git)
    cd wms-backend
+
+**Levantar la base de datos con Docker:**
+
+   ```bash
+   docker-compose up -d
+   ```
+**Ejecutar la aplicación:**
+
+   ```bash
+   mvn spring-boot:run
+   ```
+---
+### 👨‍💻 Sobre Mí
+
+José Luis Ninaco Salazar
+Desarrollador Java Backend Junior
+
+- **LinkedIn:** [jose-luis-ninaco-salazar](https://linkedin.com/in/jose-luis-ninaco-salazar/)  
+- **GitHub:** [@Jariruna](https://github.com/Jariruna)
